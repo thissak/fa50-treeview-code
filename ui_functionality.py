@@ -17,6 +17,9 @@ class MainWindow(QMainWindow, MainWindowUI):
         super().__init__()
         self.setupUi(self)  # UI 구성부 설정
 
+        # 최초 자동 선택 무시를 위한 플래그 추가
+        self.firstDisplay = True
+
         # 기능 구현부 초기화
         self.current_part_no = None           # 현재 선택된 파트넘버
         self.memo_data = {}                   # { 파트번호: [ { "memo": 내용, "timestamp": 시간 }, ... ] }
@@ -35,6 +38,7 @@ class MainWindow(QMainWindow, MainWindowUI):
         self.memoClearButton.clicked.connect(self.on_clear_memo)
         self.refresh_button.clicked.connect(self.on_refresh_clicked)
         self.searchLineEdit.returnPressed.connect(self.searchTree)
+        self.tree.currentItemChanged.connect(self.on_current_item_changed)
     
     def on_refresh_clicked(self):
         """
@@ -64,6 +68,7 @@ class MainWindow(QMainWindow, MainWindowUI):
         self.appendLog("파일 딕셔너리 업데이트 및 스타일 재적용이 완료되었습니다.")
 
     # ─── 이벤트 핸들러 구현 ─────────────────────────────
+
     def on_tree_item_clicked(self, item, column):
         part_no = item.text(column).strip().upper()
         self.current_part_no = part_no
@@ -230,10 +235,10 @@ class MainWindow(QMainWindow, MainWindowUI):
     def reset_filter_button(self):
         if self.filter_button.isChecked():
             self.filter_button.setChecked(False)
-    
+
     def appendLog(self, message):
-        self.logText.append(message)
-    
+        self.logText.append("Log event: " + message)
+
     def on_save_memo(self):
         if not self.current_part_no:
             QMessageBox.warning(self, "경고", "먼저 파트를 선택하세요.")
@@ -318,3 +323,10 @@ class MainWindow(QMainWindow, MainWindowUI):
                 f"'{search_text}'에 해당하는 노드를 찾을 수 없습니다.",
                 QMessageBox.Ok
             )
+
+    def on_current_item_changed(self, current, previous):
+        if self.firstDisplay:
+            self.firstDisplay = False  # 최초 한 번만 무시
+        else:
+            if current:
+                self.on_tree_item_clicked(current, 0)

@@ -300,11 +300,11 @@ def build_tree_view(excel_path, window):
     
     # 최종 요약정보 작성
     summary_log = "===== Operation Summary =====\n"
-    summary_log += f"총 이미지 파일 수: {len(files_dict['image'])}\n"
-    summary_log += f"총 3DXML 파일 수: {len(files_dict['xml3d'])}\n"
-    summary_log += f"총 FBX 파일 수: {len(files_dict['fbx'])}\n"
-    summary_log += f"총 유효 파트 수: {total_parts}\n"
-    summary_log += f"트리뷰에 추가된 전체 노드 수: {nodeCount}\n"
+    summary_log += f"Log event: 총 이미지 파일 수: {len(files_dict['image'])}\n"
+    summary_log += f"Log event: 총 3DXML 파일 수: {len(files_dict['xml3d'])}\n"
+    summary_log += f"Log event: 총 FBX 파일 수: {len(files_dict['fbx'])}\n"
+    summary_log += f"Log event: 총 유효 파트 수: {total_parts}\n"
+    summary_log += f"Log event: 트리뷰에 추가된 전체 노드 수: {nodeCount}\n"
     window.appendLog(summary_log)
     
     elapsed_time = time.time() - start_time

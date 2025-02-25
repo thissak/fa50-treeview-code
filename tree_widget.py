@@ -2,7 +2,7 @@
 import os
 import sys
 from PyQt5.QtWidgets import QTreeWidget, QMessageBox
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt
 
 class MyTreeWidget(QTreeWidget):
     """
@@ -21,6 +21,18 @@ class MyTreeWidget(QTreeWidget):
             if hasattr(main_window, "on_tree_item_double_clicked"):
                 main_window.on_tree_item_double_clicked(item, 0)
         event.ignore()  # 기본 동작(노드 확장/축소) 방지
+
+    def keyPressEvent(self, event):
+        """엔터 키를 누르면 현재 선택된 노드에 대해 더블 클릭 이벤트 실행"""
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            item = self.currentItem()
+            if item:
+                main_window = self.window()
+                if hasattr(main_window, "on_tree_item_double_clicked"):
+                    main_window.on_tree_item_double_clicked(item, 0)
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
