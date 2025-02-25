@@ -1,3 +1,5 @@
+#tree_manager.py
+
 import os
 import sys
 import time
@@ -57,6 +59,7 @@ def build_xml3d_dict(window):
                 part_number = os.path.splitext(file_parts[3])[0].upper()
                 if part_number not in files_dict["xml3d"]:
                     files_dict["xml3d"][part_number] = os.path.join(folder_path, fname)
+    window.appendLog(f"총 {len(files_dict['xml3d'])}개의 3DXML 파일이 추가되었습니다.")
 
 def build_image_dict(window):
     """
@@ -80,6 +83,7 @@ def build_image_dict(window):
                 part_number = os.path.splitext(file_parts[3])[0].upper()
                 if part_number not in files_dict["image"]:
                     files_dict["image"][part_number] = os.path.join(folder_path, fname)
+    window.appendLog(f"총 {len(files_dict['image'])}개의 이미지 파일이 추가되었습니다.")
 
 def build_fbx_dict(window):
     """
@@ -103,6 +107,7 @@ def build_fbx_dict(window):
                 part_number = os.path.splitext(file_parts[3])[0].upper()
                 if part_number not in files_dict["fbx"]:
                     files_dict["fbx"][part_number] = os.path.join(folder_path, fname)
+    window.appendLog(f"총 {len(files_dict['fbx'])}개의 FBX 파일이 추가되었습니다.")
 
 def safe_int(value, default="nan"):
     """

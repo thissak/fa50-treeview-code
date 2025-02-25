@@ -10,7 +10,7 @@ from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon
 from ui import MainWindowUI  # UI 구성부
 # tree_widget 모듈에서 MyTreeWidget를 import
 from tree_widget import MyTreeWidget
-from tree_manager import files_dict, display_part_info, apply_tree_view_styles
+from tree_manager import files_dict, display_part_info, apply_tree_view_styles,build_image_dict,build_xml3d_dict,build_fbx_dict
 
 class MainWindow(QMainWindow, MainWindowUI):
     def __init__(self):
@@ -33,7 +33,35 @@ class MainWindow(QMainWindow, MainWindowUI):
         self.filter_button.toggled.connect(self.on_filter_button_toggled)
         self.memoSaveButton.clicked.connect(self.on_save_memo)
         self.memoClearButton.clicked.connect(self.on_clear_memo)
+        self.refresh_button.clicked.connect(self.on_refresh_clicked)
     
+    def on_refresh_clicked(self):
+        """
+        리프레쉬 버튼 클릭 시 3개의 파일 딕셔너리(이미지, 3DXML, FBX)를 다시 읽어
+        현재 선택된 모드에 맞게 트리뷰 스타일을 업데이트하고,
+        완료 메시지를 로그창에 출력합니다.
+        """
+        # 파일 딕셔너리 갱신
+        build_image_dict(self)
+        build_xml3d_dict(self)
+        build_fbx_dict(self)
+        
+        # 현재 선택된 모드에 따른 스타일 결정
+        if self.radio_image.isChecked():
+            mode = "image"
+        elif self.radio_3dxml.isChecked():
+            mode = "3dxml"
+        elif self.radio_fbx.isChecked():
+            mode = "fbx"
+        else:
+            mode = "image"
+        
+        # 트리뷰의 스타일 재적용
+        apply_tree_view_styles(self.tree, mode)
+        
+        # 로그창에 완료 메시지 출력
+        self.appendLog("파일 딕셔너리 업데이트 및 스타일 재적용이 완료되었습니다.")
+
     # ─── 이벤트 핸들러 구현 ─────────────────────────────
     def on_tree_item_clicked(self, item, column):
         part_no = item.text(column).strip().upper()
