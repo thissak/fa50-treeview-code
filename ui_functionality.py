@@ -34,6 +34,7 @@ class MainWindow(QMainWindow, MainWindowUI):
         self.memoSaveButton.clicked.connect(self.on_save_memo)
         self.memoClearButton.clicked.connect(self.on_clear_memo)
         self.refresh_button.clicked.connect(self.on_refresh_clicked)
+        self.searchLineEdit.returnPressed.connect(self.searchTree)
     
     def on_refresh_clicked(self):
         """
@@ -299,4 +300,21 @@ class MainWindow(QMainWindow, MainWindowUI):
         except Exception as e:
             QMessageBox.critical(self, "에러", f"JSON 파일 저장 중 오류: {str(e)}")
 
-        
+    def searchTree(self):
+        """검색 텍스트박스에 입력한 파트넘버를 트리에서 찾아 선택하고 스크롤합니다."""
+        search_text = self.searchLineEdit.text().strip().upper()
+        if not search_text:
+            return
+        # MyTreeWidget에 구현된 find_item() 메서드를 사용
+        found_item = self.tree.find_item(search_text)
+        if found_item:
+            self.tree.setCurrentItem(found_item)
+            self.tree.scrollToItem(found_item)
+            self.appendLog(f"Found node: {search_text}")
+        else:
+            self.appendLog(f"Node not found: {search_text}")
+            QMessageBox.warning(
+                self, "죄송합니다.",
+                f"'{search_text}'에 해당하는 노드를 찾을 수 없습니다.",
+                QMessageBox.Ok
+            )

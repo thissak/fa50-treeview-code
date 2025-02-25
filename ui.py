@@ -2,6 +2,7 @@
 from PyQt5.QtWidgets import (
     QMainWindow, QTreeWidget, QTextEdit, QVBoxLayout, QHBoxLayout,
     QWidget, QLabel, QRadioButton, QGroupBox, QPushButton, QSpacerItem, QSizePolicy, QCheckBox,
+    QLineEdit,
     )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QFontMetrics
@@ -45,7 +46,7 @@ class MainWindowUI:
         
         # ─── 공통 스타일 ───────────────────────────────────────
         self.qgroupbox_style = (
-            "QGroupBox { background-color: #f0f0f0; border: 2px solid gray; margin-top: 10px; }"
+            "QGroupBox { background-color: #f0f0f0; border: 1px solid gray; margin-top: 10px; }"
             "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 3px; font-weight: bold; }"
         )
         self.button_style = (
@@ -145,17 +146,29 @@ class MainWindowUI:
         self.memo_group.setLayout(memo_layout)
         self.memo_group.setFixedHeight(480)
         
+        # ─── Search 항목: 파트넘버 검색 텍스트박스 ─────────────
+        self.searchLineEdit = QLineEdit(MainWindow)
+        self.searchLineEdit.setPlaceholderText("Enter Part No and press Enter")
+        self.searchLineEdit.setMinimumSize(130, 40)
+        # 검색 텍스트박스를 감쌀 그룹박스 생성
+        self.search_group = QGroupBox("Search", MainWindow)
+        self.search_group.setStyleSheet(self.qgroupbox_style)
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(self.searchLineEdit)
+        self.search_group.setLayout(search_layout)
+
         # ─── 우측 전체 레이아웃 ─────────────────────────────
         rightLayout = QVBoxLayout()
         rightLayout.addWidget(self.imageLabel)
         rightLayout.addWidget(self.radio_group)
         rightLayout.addWidget(self.memo_group)
         rightLayout.setSpacing(25)  # 우측 그룹 간 간격
+        rightLayout.addWidget(self.search_group)
 
         # ─── 보이지 않는 SpacerItem 추가 (하단 공간 차지 → 위젯을 위로 올림)
         spacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
         rightLayout.addItem(spacer)
-        
+
         rightWidget = QWidget()
         rightWidget.setLayout(rightLayout)
         

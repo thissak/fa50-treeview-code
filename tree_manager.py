@@ -24,18 +24,9 @@ files_dict = {
 
 def get_base_path():
     """실행 파일(또는 스크립트)이 있는 폴더를 반환"""
-    data_root = 'fa50-treeview-data'
-    ret_path = ''
-
     if getattr(sys, 'frozen', False):  # PyInstaller로 빌드된 경우
-        ret_path = os.path.dirname(sys.executable)
-
-    if len(ret_path) == 0:
-        ret_path = os.path.join(data_root, os.path.dirname(__file__))
-
-    ret_path = os.path.join(ret_path, data_root)
-
-    return ret_path
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(__file__)
 
 def build_xml3d_dict(window):
     """
@@ -318,3 +309,5 @@ def build_tree_view(excel_path, window):
     
     elapsed_time = time.time() - start_time
     window.appendLog(f"트리뷰 생성시간: {elapsed_time:.2f} seconds")
+
+
