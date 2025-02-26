@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QTreeWidget, QTextEdit, QVBoxLayout, QHBoxLayout,
     QWidget, QLabel, QRadioButton, QGroupBox, QPushButton, QSpacerItem, QSizePolicy, QCheckBox,
     QLineEdit,
-    )
+)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QFontMetrics
 from tree_widget import MyTreeWidget
@@ -22,28 +22,6 @@ class MainWindowUI:
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 1600)
         
-        # ─── 좌측: 트리뷰 + 로그창 ──────────────────────────────
-        self.tree = MyTreeWidget(self)
-        self.tree.setColumnCount(1)
-        self.tree.setHeaderLabels(["FA-50M FINAL ASSEMBLY VERSION POLAND"])
-        
-        self.logText = QTextEdit(MainWindow)
-        self.logText.setReadOnly(True)
-        self.logText.setFixedHeight(300)
-        
-        leftLayout = QVBoxLayout()
-        leftLayout.addWidget(self.tree, 3)
-        leftLayout.addWidget(self.logText, 1)
-        leftLayout.setSpacing(25)
-        leftWidget = QWidget()
-        leftWidget.setLayout(leftLayout)
-        
-        # ─── 우측 상단: 이미지 패널 ──────────────────────────────
-        self.imageLabel = ClickableLabel("이미지가 여기에 표시됩니다.", MainWindow)
-        self.imageLabel.setAlignment(Qt.AlignHCenter | Qt.AlignCenter)
-        self.imageLabel.setStyleSheet("border: 1px solid gray;")
-        self.imageLabel.setFixedSize(400, 400)
-        
         # ─── 공통 스타일 ───────────────────────────────────────
         self.qgroupbox_style = (
             "QGroupBox { background-color: #f0f0f0; border: 1px solid gray; margin-top: 10px; }"
@@ -54,7 +32,28 @@ class MainWindowUI:
             "QPushButton:checked, QPushButton:pressed { background-color: yellow; border: 2px solid orange; }"
         )
         
-        # ─── 라디오 버튼 그룹 + Filter 버튼 ───────────────────
+        # ─── 좌측: 트리뷰 (로그창은 제거) ──────────────────────────────
+        self.tree = MyTreeWidget(self)
+        self.tree.setColumnCount(1)
+        self.tree.setHeaderLabels(["FA-50M FINAL ASSEMBLY VERSION POLAND"])
+        
+        leftLayout = QVBoxLayout()
+        leftLayout.addWidget(self.tree)
+        leftWidget = QWidget()
+        leftWidget.setLayout(leftLayout)
+        
+        # ─── 하단: 로그창 (전체 하단 가로폭 사용) ──────────────────────────────
+        self.logText = QTextEdit(MainWindow)
+        self.logText.setReadOnly(True)
+        self.logText.setFixedHeight(300)
+        
+        # ─── 우측 상단: 이미지 패널 및 기타 구성요소 ──────────────────────────────
+        self.imageLabel = ClickableLabel("이미지가 여기에 표시됩니다.", MainWindow)
+        self.imageLabel.setAlignment(Qt.AlignHCenter | Qt.AlignCenter)
+        self.imageLabel.setStyleSheet("border: 1px solid gray;")
+        self.imageLabel.setFixedSize(400, 400)
+        
+        # 라디오 버튼 그룹
         self.radio_image = QRadioButton("Image", MainWindow)
         self.radio_3dxml = QRadioButton("3DXML", MainWindow)
         self.radio_fbx = QRadioButton("FBX", MainWindow)
@@ -78,18 +77,14 @@ class MainWindowUI:
         radio_layout.setSpacing(35)
         radio_layout.setAlignment(Qt.AlignCenter)
 
-        # FILE 체크박스 생성 (예: "Show in Explorer" 이름 사용)
+        # FILE 체크박스 생성
         self.checkbox_file = QCheckBox("Show in Explorer", MainWindow)
         self.checkbox_file.setChecked(False)
-
-        # 현재 폰트를 복사해서 bold 폰트로 변경한 후, 텍스트 너비를 측정하여 고정 너비 설정
         font = self.checkbox_file.font()
         bold_font = QFont(font)
         bold_font.setBold(True)
         fm = QFontMetrics(bold_font)
         self.checkbox_file.setFixedWidth(fm.horizontalAdvance(self.checkbox_file.text()) + 30)
-
-        # toggled 시 체크 여부에 따라 폰트 굵기를 변경
         self.checkbox_file.toggled.connect(
             lambda checked: self.checkbox_file.setStyleSheet("font-weight: bold;" if checked else "font-weight: normal;")
         )
@@ -113,28 +108,23 @@ class MainWindowUI:
         self.radio_group.setFixedHeight(180)
         self.radio_group.setLayout(radio_main_layout)
 
-        
         # ─── 메모 그룹 ─────────────────────────────────────────
         self.memo_group = QGroupBox("Memo", MainWindow)
         self.memo_group.setStyleSheet(self.qgroupbox_style)
         memo_layout = QVBoxLayout()
         
-        # 읽기 전용 메모 출력 박스
         self.memoOutput = QTextEdit(MainWindow)
         self.memoOutput.setReadOnly(True)
         self.memoOutput.setFixedHeight(150)
         self.memoOutput.setStyleSheet("QTextEdit { background-color: #e0e0e0; }")
         
-        # 메모 입력 박스 (사용자 입력용)
         self.memoText = QTextEdit(MainWindow)
         self.memoText.setFixedHeight(150)
         self.memoText.setStyleSheet("QTextEdit { text-align: left; }")
         
-        # 버튼 레이아웃 (Save Memo, Clear Memo)
         button_layout = QHBoxLayout()
         self.memoSaveButton = QPushButton("Save Memo", MainWindow)
         self.memoSaveButton.setStyleSheet(self.button_style)
-
         self.memoClearButton = QPushButton("Clear Memo", MainWindow)
         self.memoClearButton.setStyleSheet(self.button_style)
         button_layout.addWidget(self.memoSaveButton)
@@ -150,32 +140,32 @@ class MainWindowUI:
         self.searchLineEdit = QLineEdit(MainWindow)
         self.searchLineEdit.setPlaceholderText("Enter Part No and press Enter")
         self.searchLineEdit.setMinimumSize(130, 40)
-        # 검색 텍스트박스를 감쌀 그룹박스 생성
         self.search_group = QGroupBox("Search", MainWindow)
         self.search_group.setStyleSheet(self.qgroupbox_style)
         search_layout = QHBoxLayout()
         search_layout.addWidget(self.searchLineEdit)
         self.search_group.setLayout(search_layout)
 
-        # ─── 우측 전체 레이아웃 ─────────────────────────────
+        # 우측 전체 레이아웃 (SpacerItem 제거)
         rightLayout = QVBoxLayout()
         rightLayout.addWidget(self.imageLabel)
         rightLayout.addWidget(self.radio_group)
         rightLayout.addWidget(self.memo_group)
-        rightLayout.setSpacing(25)  # 우측 그룹 간 간격
+        rightLayout.setSpacing(25)
         rightLayout.addWidget(self.search_group)
-
-        # ─── 보이지 않는 SpacerItem 추가 (하단 공간 차지 → 위젯을 위로 올림)
-        spacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        rightLayout.addItem(spacer)
-
         rightWidget = QWidget()
         rightWidget.setLayout(rightLayout)
         
-        # ─── 메인 레이아웃 ─────────────────────────────
-        mainLayout = QHBoxLayout()
-        mainLayout.addWidget(leftWidget, 4)
-        mainLayout.addWidget(rightWidget, 3)
+        # ─── 상단 영역: 좌측(트리뷰) + 우측(이미지/메모 등) ─────────────────────────────
+        topLayout = QHBoxLayout()
+        topLayout.addWidget(leftWidget, 4)
+        topLayout.addWidget(rightWidget, 3)
+        
+        # ─── 메인 레이아웃: 상단 영역 + 하단 로그창 (전체 가로폭 사용) ─────────────────────────────
+        mainLayout = QVBoxLayout()
+        mainLayout.addLayout(topLayout)
+        mainLayout.addWidget(self.logText)
+        
         centralWidget = QWidget()
         centralWidget.setLayout(mainLayout)
         MainWindow.setCentralWidget(centralWidget)

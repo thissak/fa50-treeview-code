@@ -33,6 +33,7 @@ def build_xml3d_dict(window):
     02_3dxml 폴더에서 .3dxml 파일을 스캔하여,
     파일명 예: aaa_bbb_ccc_PARTNO.3dxml 의 형식이라고 가정하고,
     PARTNO를 추출하여 files_dict["xml3d"][PARTNO] = 파일 경로 로 저장.
+    디버깅을 위해 전체 파일 처리 결과를 로그에 출력함.
     """
     files_dict["xml3d"].clear()  # 기존 데이터 초기화
     base_path = get_base_path()  
@@ -42,21 +43,66 @@ def build_xml3d_dict(window):
         window.appendLog(f"[build_xml3d_dict] 02_3dxml 폴더를 찾을 수 없습니다: {folder_path}")
         return
     
-    for fname in os.listdir(folder_path):
+    all_files = os.listdir(folder_path)
+    window.appendLog(f"[build_xml3d_dict] 전체 파일 수: {len(all_files)}")
+    
+    # 폴더 내 3DXML 파일 수
+    window.xml3d_folder_count = len([fname for fname in all_files if fname.lower().endswith(".3dxml")])
+    
+    invalid_files = []   # 파일명 형식 오류
+    duplicates = {}      # {PARTNO: [중복된 파일명, ...]}
+    processed_files = 0  # 실제로 딕셔너리에 추가된 파일 수
+    
+    for fname in all_files:
         lower_name = fname.lower()
         if lower_name.endswith(".3dxml"):
             file_parts = fname.split("_")
-            if len(file_parts) >= 4:
-                part_number = os.path.splitext(file_parts[3])[0].upper()
-                if part_number not in files_dict["xml3d"]:
-                    files_dict["xml3d"][part_number] = os.path.join(folder_path, fname)
+            if len(file_parts) < 4:
+                invalid_files.append(fname)
+                window.appendLog(f"[build_xml3d_dict] 파일명 형식 오류(언더스코어 분리 부족): {fname}")
+                continue
+            
+            # 네 번째 요소에서 확장자 제거 후 대문자 변환하여 PARTNO 추출
+            part_number = os.path.splitext(file_parts[3])[0].upper()
+            if part_number in files_dict["xml3d"]:
+                # 중복 발생 시, duplicates 딕셔너리에 추가
+                if part_number in duplicates:
+                    duplicates[part_number].append(fname)
+                else:
+                    duplicates[part_number] = [fname]
+                continue
+            
+            files_dict["xml3d"][part_number] = os.path.join(folder_path, fname)
+            processed_files += 1
+    
+    # 중복 로그: 각 파트넘버에 대해 최초 파일과 중복 파일을 모두 보여줌
+    if duplicates:
+        duplicate_log_lines = []
+        duplicate_log_lines.append("[build_xml3d_dict] 중복된 PARTNO 로그:")
+        for part_number, dup_file_list in duplicates.items():
+            original_file = os.path.basename(files_dict["xml3d"][part_number])
+            duplicate_log_lines.append(f"[{part_number}]")
+            duplicate_log_lines.append(f"-> {original_file}")
+            for dup in dup_file_list:
+                duplicate_log_lines.append(f"-> {dup}")
+        duplicate_log_message = "\n".join(duplicate_log_lines)
+        window.appendLog(duplicate_log_message)
+    
+    window.appendLog(f"[build_xml3d_dict] 유효한 3DXML 파일 처리 수: {processed_files}")
     window.appendLog(f"총 {len(files_dict['xml3d'])}개의 3DXML 파일이 추가되었습니다.")
-
+    
+    window.xml3d_duplicate_count = sum(len(v) for v in duplicates.values())
+    window.xml3d_registered_count = len(files_dict["xml3d"])
+    
+    if invalid_files:
+        window.appendLog(f"[build_xml3d_dict] 올바르지 않은 형식의 파일: {invalid_files}")
+        
 def build_image_dict(window):
     """
     00_image 폴더에서 PNG/JPG 파일을 스캔하여,
     파일명 예: aaa_bbb_ccc_PARTNO.png 의 형식이라고 가정하고,
     PARTNO를 추출하여 files_dict["image"][PARTNO] = 파일 경로 로 저장.
+    디버깅을 위해 전체 파일 처리 결과를 로그에 출력함.
     """
     files_dict["image"].clear()
     base_path = get_base_path()
@@ -66,15 +112,59 @@ def build_image_dict(window):
         window.appendLog(f"[build_image_dict] 00_image 폴더를 찾을 수 없습니다: {folder_path}")
         return
     
-    for fname in os.listdir(folder_path):
+    all_files = os.listdir(folder_path)
+    window.appendLog(f"[build_image_dict] 전체 파일 수: {len(all_files)}")
+    
+    # 폴더 내 이미지 파일 수 (확장자 기준 필터)
+    window.image_folder_count = len([fname for fname in all_files if fname.lower().endswith((".png", ".jpg"))])
+    
+    invalid_files = []   # 파일명 형식 오류
+    duplicates = {}      # {PARTNO: [중복된 파일명, ...]}
+    processed_files = 0  # 실제로 딕셔너리에 추가된 파일 수
+    
+    for fname in all_files:
         lower_name = fname.lower()
         if lower_name.endswith(".png") or lower_name.endswith(".jpg"):
             file_parts = fname.split("_")
-            if len(file_parts) >= 4:
-                part_number = os.path.splitext(file_parts[3])[0].upper()
-                if part_number not in files_dict["image"]:
-                    files_dict["image"][part_number] = os.path.join(folder_path, fname)
+            if len(file_parts) < 4:
+                invalid_files.append(fname)
+                window.appendLog(f"[build_image_dict] 파일명 형식 오류(언더스코어 분리 부족): {fname}")
+                continue
+            
+            # 네 번째 요소에서 확장자 제거 후 대문자 변환하여 PARTNO 추출
+            part_number = os.path.splitext(file_parts[3])[0].upper()
+            if part_number in files_dict["image"]:
+                # 중복 발생 시, duplicates 딕셔너리에 추가
+                if part_number in duplicates:
+                    duplicates[part_number].append(fname)
+                else:
+                    duplicates[part_number] = [fname]
+                continue
+            
+            files_dict["image"][part_number] = os.path.join(folder_path, fname)
+            processed_files += 1
+
+    # 중복 로그: 각 파트넘버에 대해 최초 파일과 중복 파일을 모두 보여줌
+    if duplicates:
+        duplicate_log_lines = []
+        duplicate_log_lines.append("[build_image_dict] 중복된 PARTNO 로그:")
+        for part_number, dup_file_list in duplicates.items():
+            original_file = os.path.basename(files_dict["image"][part_number])
+            duplicate_log_lines.append(f"[{part_number}]")
+            duplicate_log_lines.append(f"-> {original_file}")
+            for dup in dup_file_list:
+                duplicate_log_lines.append(f"-> {dup}")
+        duplicate_log_message = "\n".join(duplicate_log_lines)
+        window.appendLog(duplicate_log_message)
+    
+    window.appendLog(f"[build_image_dict] 유효한 이미지 파일 처리 수: {processed_files}")
     window.appendLog(f"총 {len(files_dict['image'])}개의 이미지 파일이 추가되었습니다.")
+    
+    window.image_duplicate_count = sum(len(v) for v in duplicates.values())
+    window.image_registered_count = len(files_dict["image"])
+    
+    if invalid_files:
+        window.appendLog(f"[build_image_dict] 올바르지 않은 형식의 파일: {invalid_files}")
 
 def build_fbx_dict(window):
     """
@@ -90,7 +180,13 @@ def build_fbx_dict(window):
         window.appendLog(f"[build_fbx_dict] 03_fbx 폴더를 찾을 수 없습니다: {folder_path}")
         return
     
-    for fname in os.listdir(folder_path):
+    all_files = os.listdir(folder_path)
+    # 폴더 내 FBX 파일 수 (확장자 기준)
+    window.fbx_folder_count = len([fname for fname in all_files if fname.lower().endswith(".fbx")])
+    # 중복은 고려하지 않음
+    window.fbx_duplicate_count = 0
+    
+    for fname in all_files:
         lower_name = fname.lower()
         if lower_name.endswith(".fbx"):
             file_parts = fname.split("_")
@@ -99,6 +195,7 @@ def build_fbx_dict(window):
                 if part_number not in files_dict["fbx"]:
                     files_dict["fbx"][part_number] = os.path.join(folder_path, fname)
     window.appendLog(f"총 {len(files_dict['fbx'])}개의 FBX 파일이 추가되었습니다.")
+    window.fbx_registered_count = len(files_dict["fbx"])
 
 def safe_int(value, default="nan"):
     """
@@ -184,23 +281,23 @@ def apply_tree_view_styles(tree_widget, style):
     # mode에 따른 파일 딕셔너리 및 브러시 설정 (기존과 동일)
     if style == "image":
         active_brush = QBrush(QColor(255, 0, 0))  # 빨간색
-        file_dict = files_dict["image"]
+        file_dict_local = files_dict["image"]
     elif style == "3dxml":
         active_brush = QBrush(QColor(0, 0, 255))  # 파란색
-        file_dict = files_dict["xml3d"]
+        file_dict_local = files_dict["xml3d"]
     elif style == "fbx":
         active_brush = QBrush(QColor(0, 128, 0))  # 녹색
-        file_dict = files_dict["fbx"]
+        file_dict_local = files_dict["fbx"]
     else:
         active_brush = QBrush(QColor(0, 0, 0))
-        file_dict = {}
+        file_dict_local = {}
     default_brush = QBrush(QColor(0, 0, 0))
 
     def recurse(item):
         part_no = item.text(0)
         part_no_upper = part_no.upper()
         # 현재 노드의 활성 여부 (파일 딕셔너리에 존재하는지)
-        visible_self = part_no_upper in file_dict
+        visible_self = part_no_upper in file_dict_local
 
         # 자식 노드들을 재귀적으로 처리하여 활성 여부 계산
         visible_child = False
@@ -228,7 +325,6 @@ def apply_tree_view_styles(tree_widget, style):
         recurse(tree_widget.topLevelItem(i))
     
     tree_widget.repaint()
-
 
 def build_tree_view(excel_path, window):
     """
@@ -300,14 +396,12 @@ def build_tree_view(excel_path, window):
     
     # 최종 요약정보 작성
     summary_log = "===== Operation Summary =====\n"
-    summary_log += f"Log event: 총 이미지 파일 수: {len(files_dict['image'])}\n"
-    summary_log += f"Log event: 총 3DXML 파일 수: {len(files_dict['xml3d'])}\n"
-    summary_log += f"Log event: 총 FBX 파일 수: {len(files_dict['fbx'])}\n"
+    summary_log += f"Log event: Image - 폴더 내 파일: {window.image_folder_count}, 중복 파일: {window.image_duplicate_count}, 등록된 파일: {window.image_registered_count}\n"
+    summary_log += f"Log event: 3DXML - 폴더 내 파일: {window.xml3d_folder_count}, 중복 파일: {window.xml3d_duplicate_count}, 등록된 파일: {window.xml3d_registered_count}\n"
+    summary_log += f"Log event: FBX - 폴더 내 파일: {window.fbx_folder_count}, 중복 파일: {window.fbx_duplicate_count}, 등록된 파일: {window.fbx_registered_count}\n"
     summary_log += f"Log event: 총 유효 파트 수: {total_parts}\n"
     summary_log += f"Log event: 트리뷰에 추가된 전체 노드 수: {nodeCount}\n"
     window.appendLog(summary_log)
     
     elapsed_time = time.time() - start_time
     window.appendLog(f"트리뷰 생성시간: {elapsed_time:.2f} seconds")
-
-
