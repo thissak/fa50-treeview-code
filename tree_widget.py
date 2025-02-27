@@ -1,8 +1,11 @@
-# tree_widget.py
 import os
 import sys
 from PyQt5.QtWidgets import QTreeWidget, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl, QMimeData  # QMimeData를 여기서 가져옵니다.
+from PyQt5.QtGui import QDrag
+
+# files_dict 등 필요한 항목을 tree_manager에서 import
+from tree_manager import files_dict
 
 class MyTreeWidget(QTreeWidget):
     """
@@ -71,7 +74,7 @@ class MyTreeWidget(QTreeWidget):
             if not_found_files:
                 QMessageBox.warning(
                     self, "파일 노드 없음",
-                    f"다음 파일과 일치하는 노드를 찾을 수 없습니다:\n\n" + "\n".join(not_found_files),
+                    "다음 파일과 일치하는 노드를 찾을 수 없습니다:\n\n" + "\n".join(not_found_files),
                     QMessageBox.Ok
                 )
 
@@ -97,3 +100,40 @@ class MyTreeWidget(QTreeWidget):
             if found:
                 return found
         return None
+
+    def startDrag(self, supportedActions):
+        """
+        노드를 드래그할 때, 노드 텍스트(파트넘버)를 기반으로 현재 모드에 맞는 파일 경로를 files_dict에서 찾아
+        외부(예: Windows Explorer)로 파일처럼 드래그 앤 드롭할 수 있도록 MIME 데이터를 생성합니다.
+        """
+        item = self.currentItem()
+        if not item:
+            return
+
+        part_no = item.text(0).strip().upper()
+        main_window = self.window()
+
+        file_path = None
+        # MainWindow의 라디오 버튼 상태에 따라 파일 경로를 선택 (ui_functionality.py의 on_tree_item_double_clicked 참고)
+        if hasattr(main_window, "radio_image") and main_window.radio_image.isChecked():
+            if part_no in files_dict.get("image", {}):
+                file_path = files_dict["image"][part_no]
+        elif hasattr(main_window, "radio_3dxml") and main_window.radio_3dxml.isChecked():
+            if part_no in files_dict.get("xml3d", {}):
+                file_path = files_dict["xml3d"][part_no]
+        elif hasattr(main_window, "radio_fbx") and main_window.radio_fbx.isChecked():
+            if part_no in files_dict.get("fbx", {}):
+                file_path = files_dict["fbx"][part_no]
+
+        if not file_path or not os.path.exists(file_path):
+            # 파일 경로가 없거나 유효하지 않으면 드래그 동작 중단
+            return
+
+        mimeData = QMimeData()
+        url = QUrl.fromLocalFile(file_path)
+        mimeData.setUrls([url])
+
+        drag = QDrag(self)
+        drag.setMimeData(mimeData)
+        # 필요에 따라 drag.setPixmap() 등으로 시각적 효과를 추가할 수 있습니다.
+        drag.exec_(supportedActions)

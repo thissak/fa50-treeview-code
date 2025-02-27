@@ -6,7 +6,7 @@ import datetime
 import subprocess
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtGui import QDesktopServices, QPixmap, QIcon
+from PyQt5.QtGui import QDesktopServices, QPixmap, QFont
 from ui import MainWindowUI  # UI 구성부
 # tree_widget 모듈에서 MyTreeWidget를 import
 from tree_widget import MyTreeWidget
@@ -15,6 +15,8 @@ from tree_manager import files_dict, display_part_info, apply_tree_view_styles,b
 class MainWindow(QMainWindow, MainWindowUI):
     def __init__(self):
         super().__init__()
+        # parent_font = QFont("Arial", 10)
+        # self.setFont(parent_font)
         self.setupUi(self)  # UI 구성부 설정
 
         # 최초 자동 선택 무시를 위한 플래그 추가
