@@ -190,10 +190,10 @@ cython_debug/
 fa50-treeview-data/**
 fa50-treeview-data
 
-00_image/
+00_image/*
 01_excel/*
-02_3dxml/
-03_fbx/
-09_utils/
+02_3dxml/*
+03_fbx/*
+09_utils/*
 
 01_excel/memo.json

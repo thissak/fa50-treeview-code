@@ -1,10 +1,10 @@
 import os
 import sys
-from PyQt5.QtWidgets import QTreeWidget, QMessageBox
-from PyQt5.QtCore import Qt, QUrl, QMimeData  # QMimeData를 여기서 가져옵니다.
+import shutil
+import datetime
+from PyQt5.QtWidgets import QTreeWidget, QMessageBox, QMenu
+from PyQt5.QtCore import Qt, QUrl, QMimeData
 from PyQt5.QtGui import QDrag
-
-# files_dict 등 필요한 항목을 tree_manager에서 import
 from tree_manager import files_dict
 
 class MyTreeWidget(QTreeWidget):
@@ -114,7 +114,7 @@ class MyTreeWidget(QTreeWidget):
         main_window = self.window()
 
         file_path = None
-        # MainWindow의 라디오 버튼 상태에 따라 파일 경로를 선택 (ui_functionality.py의 on_tree_item_double_clicked 참고)
+        # MainWindow의 라디오 버튼 상태에 따라 파일 경로를 선택
         if hasattr(main_window, "radio_image") and main_window.radio_image.isChecked():
             if part_no in files_dict.get("image", {}):
                 file_path = files_dict["image"][part_no]
@@ -137,3 +137,72 @@ class MyTreeWidget(QTreeWidget):
         drag.setMimeData(mimeData)
         # 필요에 따라 drag.setPixmap() 등으로 시각적 효과를 추가할 수 있습니다.
         drag.exec_(supportedActions)
+
+    def copy_files_from_node(self, item):
+        """
+        선택된 노드와 그 자식 노드의 텍스트(파트넘버)를 기반으로, 현재 모드(files_dict)
+        에 해당하는 파일들을 새로 만든 폴더로 복사합니다.
+        """
+        main_window = self.window()
+        # 현재 모드 확인: radio_image, radio_3dxml, radio_fbx
+        if hasattr(main_window, "radio_image") and main_window.radio_image.isChecked():
+            mode = "image"
+        elif hasattr(main_window, "radio_3dxml") and main_window.radio_3dxml.isChecked():
+            mode = "xml3d"
+        elif hasattr(main_window, "radio_fbx") and main_window.radio_fbx.isChecked():
+            mode = "fbx"
+        else:
+            mode = "image"  # 기본값
+
+        # 재귀적으로 노드(파트넘버) 수집
+        def collect_nodes(node):
+            parts = [node.text(0).strip().upper()]
+            for i in range(node.childCount()):
+                parts.extend(collect_nodes(node.child(i)))
+            return parts
+
+        part_numbers = collect_nodes(item)
+
+        # 복사할 대상 폴더 생성 (선택한 노드 이름만 사용)
+        folder_name = f"Copied_{item.text(0).strip()}"
+        destination_dir = os.path.join(os.getcwd(), folder_name)
+        os.makedirs(destination_dir, exist_ok=True)
+
+        copied_files = []
+        not_found = []
+
+        # 각 파트넘버에 대해 files_dict에서 파일 경로를 찾고 복사 수행
+        for part in part_numbers:
+            if part in files_dict.get(mode, {}):
+                file_path = files_dict[mode][part]
+                if os.path.exists(file_path):
+                    try:
+                        shutil.copy2(file_path, destination_dir)
+                        copied_files.append(file_path)
+                    except Exception as e:
+                        print(f"Error copying {file_path}: {e}")
+                else:
+                    not_found.append(part)
+            else:
+                not_found.append(part)
+
+        msg = f"총 {len(copied_files)} 파일이 복사되었습니다.\n폴더: {destination_dir}"
+        if not_found:
+            msg += "\n\n다음 파일은 찾을 수 없습니다:\n" + "\n".join(not_found)
+        QMessageBox.information(self, "파일 복사 완료", msg)
+
+    def contextMenuEvent(self, event):
+        """
+        우클릭 시, 선택된 노드에 대해 '파일 복사' 메뉴를 표시하여
+        해당 노드와 자식 노드에 해당하는 파일들을 새 폴더로 복사합니다.
+        """
+        item = self.itemAt(event.pos())
+        menu = QMenu(self)
+        if item:
+            copy_action = menu.addAction("파일 복사")
+            selected_action = menu.exec_(self.viewport().mapToGlobal(event.pos()))
+            if selected_action == copy_action:
+                self.copy_files_from_node(item)
+        else:
+            menu.addAction("노드를 선택하세요")
+            menu.exec_(self.viewport().mapToGlobal(event.pos()))
